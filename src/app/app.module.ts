@@ -9,10 +9,11 @@ import { CoursesComponent } from './components/courses/courses.component';
 import { BenefitsComponent } from './components/benefits/benefits.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { FooterComponent } from './components/footer/footer.component';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { EnrollmentsComponent } from './pages/enrollments/enrollments.component';
 import { HomeComponent } from './pages/home/home.component';
+import { VentasComponent } from './features/ventas/pages/ventas/ventas.component';
  
 @NgModule({
   declarations: [
@@ -24,11 +25,13 @@ import { HomeComponent } from './pages/home/home.component';
     ContactComponent,
     FooterComponent,
     EnrollmentsComponent,
-    HomeComponent
+    HomeComponent,
+    VentasComponent
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
+    ReactiveFormsModule,
     FormsModule,
     AppRoutingModule
   ],

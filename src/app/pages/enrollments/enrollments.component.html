@@ -1,14 +1,68 @@
 <h2 class="titulo"> Gestion de Inscripciones </h2>
 <div class="container">
-    <!-- FORMULARIO -->
+    <!-- FORMULARIO REACTIVO -->
     <div class="formulario">
-
         <h3> {{ editMode ? 'Editar Inscripción' : 'Nueva Inscripción' }}</h3>
-        <form (ngSubmit)="save()">
-            <input type="text" [(ngModel)]="enrollment.name" name="name" placeholder="Nombre Completo" required>
-            <input type="text" [(ngModel)]="enrollment.course" name="course" placeholder="Curso" required>
-            <input type="date" [(ngModel)]="enrollment.date" name="date" required>
-            <button type="submit">{{editMode? 'Actualizar' : 'Inscribirse'}}</button>
+        
+        <form [formGroup]="enrollmentForm" (ngSubmit)="save()">
+            <!-- Campo Nombre -->
+            <input
+                type="text"
+                formControlName="name"
+                placeholder="Nombre Completo"
+                [class.invalid]="name?.invalid && (name?.touched || name?.dirty)"
+                [class.valid]="name?.valid && (name?.touched || name?.dirty)">
+            
+            <div class="error" *ngIf="name?.invalid && (name?.touched || name?.dirty)">
+                <span *ngIf="name?.errors?.['required']">⚠️ El nombre es obligatorio.</span>
+                <span *ngIf="name?.errors?.['minlength']">
+                    ⚠️ Mínimo 3 caracteres (actual: {{ name?.value?.length || 0 }}).
+                </span>
+            </div>
+
+            <!-- Campo Curso -->
+            <input
+                type="text"
+                formControlName="course"
+                placeholder="Curso"
+                [class.invalid]="course?.invalid && (course?.touched || course?.dirty)"
+                [class.valid]="course?.valid && (course?.touched || course?.dirty)">
+            
+            <div class="error" *ngIf="course?.invalid && (course?.touched || course?.dirty)">
+                <span *ngIf="course?.errors?.['required']">⚠️ El curso es obligatorio.</span>
+                <span *ngIf="course?.errors?.['minlength']">
+                    ⚠️ Mínimo 2 caracteres (actual: {{ course?.value?.length || 0 }}).
+                </span>
+            </div>
+
+            <!-- Campo Fecha -->
+            <input
+                type="date"
+                formControlName="date"
+                [class.invalid]="date?.invalid && (date?.touched || date?.dirty)"
+                [class.valid]="date?.valid && (date?.touched || date?.dirty)">
+            
+            <div class="error" *ngIf="date?.invalid && (date?.touched || date?.dirty)">
+                <span *ngIf="date?.errors?.['required']">⚠️ La fecha es obligatoria.</span>
+            </div>
+
+            <!-- Botón Submit -->
+            <button 
+                type="submit" 
+                [disabled]="enrollmentForm.invalid"
+                [class.disabled]="enrollmentForm.invalid">
+                {{ editMode ? 'Actualizar' : 'Inscribirse' }}
+            </button>
+
+            <!-- Indicador de estado del formulario -->
+            <div class="form-status" *ngIf="enrollmentForm.touched">
+                <small *ngIf="enrollmentForm.valid" class="success">
+                    ✓ Formulario válido
+                </small>
+                <small *ngIf="enrollmentForm.invalid" class="warning">
+                    ⚠ Complete todos los campos correctamente
+                </small>
+            </div>
         </form>
     </div>
 
@@ -31,7 +85,7 @@
                     <td> {{ e.date | date }} </td>
                     <td>
                         <button (click)="edit(e)">Editar</button>
-                        <button (click)="delete(e.id!) ">Eliminar</button>
+                        <button (click)="delete(e.id!)">Eliminar</button>
                     </td>
                 </tr>
             </tbody>

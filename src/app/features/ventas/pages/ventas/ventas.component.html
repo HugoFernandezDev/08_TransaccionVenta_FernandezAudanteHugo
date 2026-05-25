@@ -1,0 +1,256 @@
+<div class="sales-container">
+  <!-- Encabezado del Módulo -->
+  <div class="sales-header">
+    <h1>Transacciones de Venta</h1>
+    <p>Registra y gestiona las ventas de productos complementarios del sistema.</p>
+  </div>
+
+  <!-- Alertas de Éxito / Error -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <span class="icon">✓</span>
+    <p>{{ successMessage }}</p>
+    <button class="close-btn" (click)="clearAlerts()">×</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    <span class="icon">⚠</span>
+    <p>{{ errorMessage }}</p>
+    <button class="close-btn" (click)="clearAlerts()">×</button>
+  </div>
+
+  <!-- Navegación por Pestañas (Tabs) -->
+  <div class="tabs-navigation">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'registro'" 
+      (click)="setTab('registro')">
+      Registrar Nueva Venta
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'historial'" 
+      (click)="setTab('historial')">
+      Historial de Ventas
+    </button>
+  </div>
+
+  <!-- CONTENIDO 1: REGISTRO DE VENTA -->
+  <div *ngIf="activeTab === 'registro'" class="tab-content fade-in">
+    <form [formGroup]="ventaForm" (ngSubmit)="$event.preventDefault()">
+      <div class="sales-grid">
+        
+        <!-- Columna Izquierda: Formulario de Selección -->
+        <div class="card form-card">
+          <div class="card-header">
+            <h3>Datos de la Transacción</h3>
+          </div>
+          <div class="card-body">
+            <!-- Selección de Cliente -->
+            <div class="form-group">
+              <label for="clienteId">Cliente Responsable <span class="required">*</span></label>
+              <select 
+                id="clienteId" 
+                formControlName="clienteId" 
+                class="form-control"
+                [class.is-invalid]="clienteId?.invalid && clienteId?.touched"
+                [class.is-valid]="clienteId?.valid && clienteId?.touched">
+                <option value="" disabled selected>-- Seleccione un cliente --</option>
+                <option *ngFor="let c of clientes" [value]="c.id">
+                  {{ c.nombre }} - Doc: {{ c.documento }}
+                </option>
+              </select>
+              <div *ngIf="clienteId?.invalid && clienteId?.touched" class="validation-message">
+                Debe seleccionar un cliente responsable de la transacción.
+              </div>
+            </div>
+
+            <hr class="separator" />
+
+            <div class="product-selection-box">
+              <h4>Agregar Productos</h4>
+              
+              <!-- Selección de Producto -->
+              <div class="form-group">
+                <label for="productoId">Producto disponible</label>
+                <select id="productoId" formControlName="productoId" class="form-control">
+                  <option value="" selected>-- Seleccione un producto --</option>
+                  <option *ngFor="let p of productos" [value]="p.id">
+                    {{ p.nombre }} - ${{ p.precio.toFixed(2) }} (Stock: {{ p.stock }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- Ingreso de Cantidad -->
+              <div class="form-group">
+                <label for="cantidad">Cantidad a vender</label>
+                <input 
+                  type="number" 
+                  id="cantidad" 
+                  formControlName="cantidad" 
+                  class="form-control" 
+                  placeholder="Ej. 1"
+                  min="1" />
+              </div>
+
+              <!-- Botón Agregar al Carrito Local -->
+              <button 
+                type="button" 
+                class="btn btn-secondary" 
+                (click)="agregarProducto()">
+                + Agregar Producto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Detalle y Totales -->
+        <div class="card table-card">
+          <div class="card-header d-flex-between">
+            <h3>Detalle de Artículos</h3>
+            <span class="badge" [class.badge-primary]="detallesLocal.length > 0">
+              {{ detallesLocal.length }} items
+            </span>
+          </div>
+          <div class="card-body">
+            
+            <!-- Tabla Dinámica -->
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-right">Precio</th>
+                    <th class="text-right">Subtotal</th>
+                    <th class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of detallesLocal; let i = index">
+                    <td class="product-name">{{ item.nombre }}</td>
+                    <td class="text-center">{{ item.cantidad }}</td>
+                    <td class="text-right">${{ item.precio.toFixed(2) }}</td>
+                    <td class="text-right font-semibold">${{ item.subtotal.toFixed(2) }}</td>
+                    <td class="text-center">
+                      <button 
+                        type="button" 
+                        class="delete-item-btn" 
+                        (click)="eliminarProducto(i)" 
+                        title="Quitar producto">
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  <!-- Si la tabla está vacía -->
+                  <tr *ngIf="detallesLocal.length === 0">
+                    <td colspan="5" class="empty-table-message">
+                      <div class="empty-state">
+                        <span class="empty-icon">🛒</span>
+                        <p>No se han agregado productos a la venta.</p>
+                        <small>Usa el formulario de la izquierda para agregar artículos.</small>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resumen y Total -->
+            <div class="summary-container" *ngIf="detallesLocal.length > 0">
+              <div class="summary-row">
+                <span>Subtotal General</span>
+                <span>${{ totalGeneral.toFixed(2) }}</span>
+              </div>
+              <div class="summary-row total-row">
+                <span>Total de Transacción</span>
+                <span class="total-amount">${{ totalGeneral.toFixed(2) }}</span>
+              </div>
+
+              <!-- Registrar Venta -->
+              <button 
+                type="button" 
+                class="btn btn-primary btn-block" 
+                [disabled]="ventaForm.invalid || detallesLocal.length === 0"
+                (click)="registrarVenta()">
+                ✓ Registrar Transacción de Venta
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- CONTENIDO 2: HISTORIAL DE VENTAS -->
+  <div *ngIf="activeTab === 'historial'" class="tab-content fade-in">
+    <div class="card history-card">
+      <div class="card-header d-flex-between flex-wrap gap-15">
+        <h3>Historial de Transacciones</h3>
+        
+        <!-- Buscador -->
+        <div class="search-box">
+          <input 
+            type="text" 
+            placeholder="Buscar por cliente o documento..." 
+            [(ngModel)]="searchQuery" 
+            (input)="filtrarVentas()" 
+            class="form-control search-input" />
+          <span class="search-icon">🔍</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>N° Venta</th>
+                <th>Cliente</th>
+                <th>Fecha de Transacción</th>
+                <th class="text-center">Artículos</th>
+                <th class="text-right">Total</th>
+                <th>Productos Vendidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of ventasFiltradas">
+                <td class="font-semibold text-primary">#{{ v.id }}</td>
+                <td>
+                  <div class="client-info">
+                    <strong>{{ v.customer.nombre }}</strong>
+                    <small>Doc: {{ v.customer.documento }}</small>
+                  </div>
+                </td>
+                <td>{{ v.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-center">
+                  <span class="badge badge-secondary">{{ contarProductos(v) }}</span>
+                </td>
+                <td class="text-right font-bold text-success">${{ v.total.toFixed(2) }}</td>
+                <td>
+                  <div class="inline-details">
+                    <span *ngFor="let d of v.details" class="detail-tag">
+                      {{ d.product.nombre }} (x{{ d.cantidad }})
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Si no hay ventas registradas -->
+              <tr *ngIf="ventasFiltradas.length === 0">
+                <td colspan="6" class="empty-table-message">
+                  <div class="empty-state">
+                    <span class="empty-icon">📊</span>
+                    <p>No se encontraron transacciones registradas.</p>
+                    <small *ngIf="searchQuery">Intenta cambiar los términos de búsqueda.</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
